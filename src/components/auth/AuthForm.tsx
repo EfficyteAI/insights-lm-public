@@ -13,6 +13,7 @@ const AuthForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
@@ -30,37 +31,64 @@ const AuthForm = () => {
     setLoading(true);
 
     try {
-      console.log('Attempting sign in for:', email);
-      
-      const { error, data } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      
-      if (error) {
-        console.error('Sign in error:', error);
-        if (error.message.includes('Invalid login credentials')) {
-          throw new Error('Invalid email or password. Please check your credentials and try again.');
-        } else if (error.message.includes('Email not confirmed')) {
-          throw new Error('Please check your email and click the confirmation link before signing in.');
-        } else {
-          throw error;
+      if (isSignUp) {
+        console.log('Attempting sign up for:', email);
+        
+        const { error, data } = await supabase.auth.signUp({
+          email,
+          password,
+        });
+        
+        if (error) {
+          console.error('Sign up error:', error);
+          if (error.message.includes('User already registered')) {
+            throw new Error('An account with this email already exists. Please sign in instead.');
+          } else if (error.message.includes('Password should be at least')) {
+            throw new Error('Password should be at least 6 characters long.');
+          } else {
+            throw error;
+          }
         }
+        
+        console.log('Sign up successful:', data.user?.email);
+        
+        toast({
+          title: "Account created!",
+          description: "You have successfully created an account and are now signed in.",
+        });
+      } else {
+        console.log('Attempting sign in for:', email);
+      
+        const { error, data } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+      
+        if (error) {
+          console.error('Sign in error:', error);
+          if (error.message.includes('Invalid login credentials')) {
+            throw new Error('Invalid email or password. Please check your credentials and try again, or create a new account.');
+          } else if (error.message.includes('Email not confirmed')) {
+            throw new Error('Please check your email and click the confirmation link before signing in.');
+          } else {
+            throw error;
+          }
+        }
+      
+        console.log('Sign in successful:', data.user?.email);
+      
+        toast({
+          title: "Welcome back!",
+          description: "You have successfully signed in.",
+        });
       }
-      
-      console.log('Sign in successful:', data.user?.email);
-      
-      toast({
-        title: "Welcome back!",
-        description: "You have successfully signed in.",
-      });
 
       // The AuthContext will handle the redirect automatically
       
     } catch (error: any) {
       console.error('Auth form error:', error);
       toast({
-        title: "Sign In Error",
+        title: isSignUp ? "Sign Up Error" : "Sign In Error",
         description: error.message,
         variant: "destructive",
       });
@@ -72,9 +100,12 @@ const AuthForm = () => {
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader>
-        <CardTitle>Sign In</CardTitle>
+        <CardTitle>{isSignUp ? 'Create Account' : 'Sign In'}</CardTitle>
         <CardDescription>
-          Enter your credentials to access your notebooks
+          {isSignUp 
+            ? 'Create a new account to get started' 
+            : 'Enter your credentials to access your notebooks'
+          }
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -98,13 +129,27 @@ const AuthForm = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              placeholder="Enter your password"
+              placeholder={isSignUp ? "Create a password (min 6 characters)" : "Enter your password"}
               minLength={6}
             />
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Signing In...' : 'Sign In'}
+            {loading ? (isSignUp ? 'Creating Account...' : 'Signing In...') : (isSignUp ? 'Create Account' : 'Sign In')}
           </Button>
+          
+          <div className="text-center">
+            <Button
+              type="button"
+              variant="link"
+              onClick={() => setIsSignUp(!isSignUp)}
+              className="text-sm"
+            >
+              {isSignUp 
+                ? 'Already have an account? Sign in' 
+                : "Don't have an account? Create one"
+              }
+            </Button>
+          </div>
         </form>
       </CardContent>
     </Card>
