@@ -23,11 +23,13 @@ serve(async (req) => {
     const authHeader = Deno.env.get('NOTEBOOK_GENERATION_AUTH');
     
     if (!webhookUrl) {
-      throw new Error('NOTEBOOK_CHAT_URL environment variable not set');
+      console.error('NOTEBOOK_CHAT_URL environment variable not set. Please add this secret in Supabase Dashboard -> Edge Functions -> Secrets');
+      throw new Error('NOTEBOOK_CHAT_URL environment variable not set. Please configure this secret in your Supabase project dashboard under Edge Functions -> Secrets. The value should be your n8n webhook URL (e.g., https://your-n8n-instance.com/webhook/2fabf43f-6e6e-424b-8e93-9150e9ce7d6c)');
     }
 
     if (!authHeader) {
-      throw new Error('NOTEBOOK_GENERATION_AUTH environment variable not set');
+      console.error('NOTEBOOK_GENERATION_AUTH environment variable not set. Please add this secret in Supabase Dashboard -> Edge Functions -> Secrets');
+      throw new Error('NOTEBOOK_GENERATION_AUTH environment variable not set. Please configure this secret in your Supabase project dashboard under Edge Functions -> Secrets. This should be the authentication header value for your n8n webhook.');
     }
 
     console.log('Sending to webhook with auth header');
